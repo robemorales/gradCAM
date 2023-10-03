@@ -3,6 +3,11 @@ import os
 import cv2
 import numpy as np
 import torch
+import sys
+sys.path.append('/home/rmorales/anaconda3/envs/myenv/MLAFM-master/')
+
+import afm
+
 from torchvision import models
 from pytorch_grad_cam import (
     GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus,
@@ -20,6 +25,11 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--use-cuda', action='store_true', default=False,
                         help='Use NVIDIA GPU acceleration')
+    parser.add_argument('--network', default='resnet50', type=str,
+                   choices=['resnet50', 'resnet101', 'resnet152'],
+                   help='model architecture')
+
+    parser.add_argument('--target', type=int, help='target category')
     parser.add_argument(
         '--image-path',
         type=str,
@@ -76,7 +86,12 @@ if __name__ == '__main__':
         "gradcamelementwise": GradCAMElementWise
     }
 
-    model = models.resnet50(pretrained=True)
+    #model = models.resnet50(pretrained=True)
+    model = afm.__dict__[args.network](pretrained=True, num_classes=227)
+    model = torch.nn.DataParallel(model)
+   #ckpt = torch.load('results/food_mlafm/model_best.pkl')
+    ckpt = torch.load('/home/rmorales/anaconda3/envs/myenv/MLAFM-master/results/food/model_best.pkl')
+    model.load_state_dict(ckpt)
 
     # Choose the target layer you want to compute the visualization for.
     # Usually this will be the last convolutional layer in the model.
@@ -91,20 +106,24 @@ if __name__ == '__main__':
     # from pytorch_grad_cam.utils.find_layers import find_layer_types_recursive
     # find_layer_types_recursive(model, [torch.nn.ReLU])
     
-    target_layers = [model.layer4]
+    target_layers = [model.module.layer4]
 
     rgb_img = cv2.imread(args.image_path, 1)[:, :, ::-1]
     rgb_img = np.float32(rgb_img) / 255
     input_tensor = preprocess_image(rgb_img,
                                     mean=[0.485, 0.456, 0.406],
                                     std=[0.229, 0.224, 0.225])
+    # Obtener la imagen inversa
+    #inverse_img = 1.0 - rgb_img
 
+    #input_tensor = preprocess_image(inverse_img, mean=[0.5, 0.5, 0.5],
+    #                           std=[0.5, 0.5, 0.5])
     # We have to specify the target we want to generate
     # the Class Activation Maps for.
     # If targets is None, the highest scoring category (for every member in the batch) will be used.
     # You can target specific categories by
-    # targets = [e.g ClassifierOutputTarget(281)]
-    targets = None
+    # targets = [e.g ClassifierOutputTarget(285)/home/rmorales/anaconda3/envs/myenv/MLAFM-master/results/food#]
+    targets = [ClassifierOutputTarget(args.target)] #baby_back_ribs
 
     # Using the with statement ensures the context is freed, and you can
     # recreate different CAM objects in a loop.
@@ -139,7 +158,24 @@ if __name__ == '__main__':
     cam_output_path = os.path.join(args.output_dir, f'{args.method}_cam.jpg')
     gb_output_path = os.path.join(args.output_dir, f'{args.method}_gb.jpg')
     cam_gb_output_path = os.path.join(args.output_dir, f'{args.method}_cam_gb.jpg')
-
+    #Metrics
+    
+    #end-metrics
     cv2.imwrite(cam_output_path, cam_image)
     cv2.imwrite(gb_output_path, gb)
     cv2.imwrite(cam_gb_output_path, cam_gb)
+# Now lets see how to evaluate this explanation:
+from pytorch_grad_cam.metrics.cam_mult_image import CamMultImageConfidenceChange
+from pytorch_grad_cam.utils.model_targets import ClassifierOutputSoftmaxTarget
+from PIL import Image
+# For the metrics we want to measure the change in the confidence, after softmax, that's why
+# we use ClassifierOutputSoftmaxTarget.
+targets = [ClassifierOutputSoftmaxTarget(args.target)]
+cam_metric = CamMultImageConfidenceChange()
+scores, visualizations = cam_metric(input_tensor, grayscale_cam, targets, model, return_visualization=True)
+score = scores[0]
+visualization = visualizations[0].cpu().numpy().transpose((1, 2, 0))
+visualization = deprocess_image(visualization)
+print(f"The confidence increase percent: {100*score}")
+print("The visualization of the pertubated image for the metric:")
+Image.fromarray(visualization)
