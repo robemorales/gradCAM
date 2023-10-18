@@ -7,7 +7,7 @@ import sys
 sys.path.append('/home/rmorales/anaconda3/envs/myenv/MLAFM-master/')
 
 import afm
-
+import torch.nn as nn
 from torchvision import models
 from pytorch_grad_cam import (
     GradCAM, HiResCAM, ScoreCAM, GradCAMPlusPlus,
@@ -87,10 +87,13 @@ if __name__ == '__main__':
     }
 
     #model = models.resnet50(pretrained=True)
-    model = afm.__dict__[args.network](pretrained=True, num_classes=227)
+    #model = afm.__dict__[args.network](pretrained=True, num_classes=227)
+    num_cls = 73
+    model = models.resnet50(pretrained=True)
+    model.fc = nn.Linear(model.fc.in_features, num_cls)
     model = torch.nn.DataParallel(model)
    #ckpt = torch.load('results/food_mlafm/model_best.pkl')
-    ckpt = torch.load('/home/rmorales/anaconda3/envs/myenv/MLAFM-master/results/food/model_best.pkl')
+    ckpt = torch.load('/home/rmorales/anaconda3/envs/myenv/MLAFM-master/results/food/model_unimib2016.pkl')
     model.load_state_dict(ckpt)
 
     # Choose the target layer you want to compute the visualization for.
@@ -106,7 +109,7 @@ if __name__ == '__main__':
     # from pytorch_grad_cam.utils.find_layers import find_layer_types_recursive
     # find_layer_types_recursive(model, [torch.nn.ReLU])
     
-    target_layers = [model.module.layer4]
+    target_layers = [model.module.layer4[-1]]
 
     rgb_img = cv2.imread(args.image_path, 1)[:, :, ::-1]
     rgb_img = np.float32(rgb_img) / 255
@@ -123,7 +126,7 @@ if __name__ == '__main__':
     # If targets is None, the highest scoring category (for every member in the batch) will be used.
     # You can target specific categories by
     # targets = [e.g ClassifierOutputTarget(285)/home/rmorales/anaconda3/envs/myenv/MLAFM-master/results/food#]
-    targets = [ClassifierOutputTarget(args.target)] #baby_back_ribs
+    targets = [ClassifierOutputTarget(args.target)] 
 
     # Using the with statement ensures the context is freed, and you can
     # recreate different CAM objects in a loop.
