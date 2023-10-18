@@ -8,6 +8,7 @@ from torchvision import transforms
 from torchvision.transforms import Compose, Normalize, ToTensor
 from typing import List, Dict
 import math
+from PIL import Image
 
 
 """def preprocess_image(
@@ -23,12 +24,19 @@ def preprocess_image(
     img: np.ndarray, mean=[
         0.5, 0.5, 0.5], std=[
             0.5, 0.5, 0.5], size = 224)-> torch.Tensor:
+    img_pil = Image.fromarray((img * 255).astype(np.uint8))
     preprocessing = Compose([
         transforms.Resize(size),
         ToTensor(),
         Normalize(mean=mean, std=std)
     ])
-    return preprocessing(img.copy()).unsqueeze(0)
+    # Aplicar las transformaciones a la imagen PIL
+    img_tensor = preprocessing(img_pil)
+    
+    # Agregar una dimensión adicional para crear un lote (batch)
+    img_tensor = img_tensor.unsqueeze(0)
+    
+    return img_tensor
 
 
 def deprocess_image(img):
