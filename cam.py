@@ -117,6 +117,8 @@ if __name__ == '__main__':
                                     mean=[0.485, 0.456, 0.406],
                                     std=[0.229, 0.224, 0.225],
                                     size=224)
+    input_tensor = input_tensor.to('cuda')
+
     # Obtener la imagen inversa
     #inverse_img = 1.0 - rgb_img
 
