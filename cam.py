@@ -115,7 +115,8 @@ if __name__ == '__main__':
     rgb_img = np.float32(rgb_img) / 255
     input_tensor = preprocess_image(rgb_img,
                                     mean=[0.485, 0.456, 0.406],
-                                    std=[0.229, 0.224, 0.225])
+                                    std=[0.229, 0.224, 0.225],
+                                    size=224)
     # Obtener la imagen inversa
     #inverse_img = 1.0 - rgb_img
 
