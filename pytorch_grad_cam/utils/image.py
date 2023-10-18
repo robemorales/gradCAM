@@ -9,7 +9,7 @@ from typing import List, Dict
 import math
 
 
-def preprocess_image(
+"""def preprocess_image(
     img: np.ndarray, mean=[
         0.5, 0.5, 0.5], std=[
             0.5, 0.5, 0.5]) -> torch.Tensor:
@@ -17,7 +17,16 @@ def preprocess_image(
         ToTensor(),
         Normalize(mean=mean, std=std)
     ])
-    return preprocessing(img.copy()).unsqueeze(0)
+    return preprocessing(img.copy()).unsqueeze(0)"""
+def preprocess_image(
+    img: np.ndarray, mean=[
+        0.5, 0.5, 0.5], std=[
+            0.5, 0.5, 0.5], size = 224)-> torch.Tensor:
+    preprocessing = Compose([
+        transforms.Resize(size),
+        ToTensor(),
+        Normalize(mean=mean, std=std)
+    ])
 
 
 def deprocess_image(img):
