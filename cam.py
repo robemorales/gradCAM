@@ -150,7 +150,13 @@ if __name__ == '__main__':
 
         grayscale_cam = grayscale_cam[0, :]
 
-        cam_image = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
+        #cam_image = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
+        cam_image = show_cam_on_image(
+            rgb_img, 
+            cv2.resize(grayscale_cam, (rgb_img.shape[1], rgb_img.shape[0])), 
+            use_rgb=True
+        )
+
         cam_image = cv2.cvtColor(cam_image, cv2.COLOR_RGB2BGR)
 
     gb_model = GuidedBackpropReLUModel(model=model, use_cuda=args.use_cuda)
