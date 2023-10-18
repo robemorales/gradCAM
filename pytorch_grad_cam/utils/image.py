@@ -28,6 +28,7 @@ def preprocess_image(
         ToTensor(),
         Normalize(mean=mean, std=std)
     ])
+    return preprocessing(img.copy()).unsqueeze(0)
 
 
 def deprocess_image(img):
