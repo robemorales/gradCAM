@@ -5,7 +5,6 @@ import cv2
 import numpy as np
 import torch
 from torchvision import transforms
-from torch.tensor import Compose, ToTensor, Normalize
 from torchvision.transforms import Compose, Normalize, ToTensor
 from typing import List, Dict
 import math
