@@ -111,7 +111,7 @@ if __name__ == '__main__':
     
     target_layers = [model.module.layer4[-1]]
 
-    rgb_img = cv2.imread(args.image_path, 1)[:, :, ::-1]
+    rgb_img = cv2.imread(args.image_path, flags=cv2.IMREAD_COLOR|cv2.IMREAD_IGNORE_ORIENTATION)[:, :, ::-1]
     rgb_img = np.float32(rgb_img) / 255
     input_tensor = preprocess_image(rgb_img,
                                     mean=[0.485, 0.456, 0.406],
